@@ -3,11 +3,30 @@
 	import Slider from './Slider.svelte';
 	import type { CartItem } from '$lib/types';
 	import type { Product } from './types';
+	import type { Snapshot } from './$types';
 
 	let { data } = $props();
 	const product = $derived(data.product);
 	const cart = $derived(data.cart);
-	let count = $state(1);
+
+	// 商品IDごとのカウント値を保持するオブジェクト
+	let countMap = $state<Record<string, number>>({});
+	// 現在の商品のカウント値（product?.idが変わるとリアクティブに更新される）
+	const count = $derived(product?.id ? countMap[product.id] || 1 : 1);
+
+	// カウント値を増減する関数
+	function incrementCount() {
+		if (product?.id) {
+			countMap[product.id] = (countMap[product.id] || 1) + 1;
+		}
+	}
+
+	function decrementCount() {
+		if (product?.id && countMap[product.id] > 1) {
+			countMap[product.id] = countMap[product.id] - 1;
+		}
+	}
+
 	let recommendRequest: Promise<Product[]> = $state(new Promise(() => []));
 
 	afterNavigate(() => {
@@ -15,6 +34,13 @@
 			response.json()
 		);
 	});
+
+	export const snapshot: Snapshot = {
+		capture: () => countMap,
+		restore: (value) => {
+			countMap = value;
+		}
+	};
 </script>
 
 <header class="header">
@@ -45,9 +71,9 @@
 				</dl>
 				<div>
 					<div class="count-container">
-						<button onclick={() => count--}>-</button>
+						<button onclick={() => decrementCount()}>-</button>
 						<p>{count}</p>
-						<button onclick={() => count++}>+</button>
+						<button onclick={() => incrementCount()}>+</button>
 					</div>
 					<form method="post">
 						<input type="hidden" name="productId" value={product.id} />

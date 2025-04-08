@@ -1,0 +1,10 @@
+[
+	{
+		"productId": "react-book",
+		"count": 1
+	},
+	{
+		"productId": "vue-book",
+		"count": 20
+	}
+]
